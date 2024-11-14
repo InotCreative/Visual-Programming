@@ -1,0 +1,200 @@
+import pygame
+import random
+import typing
+import sys
+
+WIDTH: int = 900
+HEIGHT: int = 600
+
+NUMBER_OF_ELEMENTS: int = 300
+GREEN: typing.Tuple[int, int, int] = (0, 255, 0)
+BLACK: typing.Tuple[int, int, int] = [0, 0, 0]
+BLUE: typing.Tuple[int, int, int] = (98, 236, 186)  # Color for sorted elements
+
+class VisualizeArray:
+    def __init__(self, height: int) -> None:
+        self.width: int = WIDTH // NUMBER_OF_ELEMENTS
+        self.height: int = height
+        self.yPos: int = HEIGHT - self.height
+        self.sorted: int = False
+    
+    def show(self, screen: pygame.Surface, xPos: int):
+        pygame.draw.rect(screen, BLUE, (xPos, self.yPos, self.width, self.height))
+
+class SortArray:
+    @staticmethod
+    def bubbleSort(unsortedArray: typing.List[VisualizeArray], screen: pygame.Surface) -> None:
+        swapped: bool = True
+        while swapped:
+            swapped = False
+            for i in range(len(unsortedArray) - 1):
+                if unsortedArray[i].height > unsortedArray[i + 1].height:
+                    unsortedArray[i], unsortedArray[i + 1] = unsortedArray[i + 1], unsortedArray[i]
+                    swapped = True
+                    
+                    SortArray.draw(screen, unsortedArray)
+                    pygame.display.flip()
+    
+    @staticmethod
+    def partation(unsortedArray: typing.List[VisualizeArray], low: int, high: int, screen: pygame.Surface):
+        pivot: typing.List[VisualizeArray] = unsortedArray[high]
+        
+        i: int = low - 1
+        
+        for j in range(low, high):
+            if (unsortedArray[j].height <= pivot.height):
+                i = i + 1
+                
+                (unsortedArray[i], unsortedArray[j]) = (unsortedArray[j], unsortedArray[i])
+                SortArray.draw(screen, unsortedArray)
+                pygame.display.flip()
+        
+        (unsortedArray[i + 1], unsortedArray[high]) = (unsortedArray[high], unsortedArray[i + 1])
+        SortArray.draw(screen, unsortedArray)
+        pygame.display.flip()
+        
+        return i + 1
+  
+    @staticmethod
+    def quickSort(unsortedArray: typing.List[VisualizeArray], low: int, high: int, screen: pygame.Surface):
+        if (low < high):
+            pi: int = SortArray.partation(unsortedArray, low, high, screen)
+            
+            SortArray.quickSort(unsortedArray, low, pi - 1, screen)
+            SortArray.quickSort(unsortedArray, pi + 1, high, screen)            
+
+    @staticmethod
+    def merge(unsortedArray: typing.List[VisualizeArray], l: int, m: int, r: int, screen: pygame.Surface):
+        n1: int = m - l + 1
+        n2: int = r - m
+        
+        L: typing.List[VisualizeArray] = [0] * (n1)
+        R: typing.List[VisualizeArray] = [0] * (n2)
+        
+        for i in range(0, n1):
+            L[i] = unsortedArray[l + i]
+        
+        for j in range(0, n2):
+            R[j] = unsortedArray[m + 1 + j]
+            
+        i: int = 0
+        j: int = 0
+        k: int = l
+        
+        while i < n1 and j < n2:
+            if (L[i].height <= R[j].height):
+                unsortedArray[k] = L[i]
+                SortArray.draw(screen, unsortedArray)
+                pygame.display.flip()
+                i += 1
+                
+            else:
+                unsortedArray[k] = R[j]
+                SortArray.draw(screen, unsortedArray)
+                pygame.display.flip()
+                j += 1
+            
+            k += 1
+        
+        while i < n1:
+            unsortedArray[k] = L[i]
+            i += 1
+            k += 1
+        
+        while j < n2:
+            unsortedArray[k] = R[j]
+            j += 1
+            k += 1
+    
+    @staticmethod
+    def mergeSort(unsortedArray: typing.List[VisualizeArray], l: int, r: int, screen: pygame.Surface):
+        if l < r:
+            m: int = l + (r - l) // 2
+            
+            SortArray.mergeSort(unsortedArray, l , m, screen)
+            SortArray.mergeSort(unsortedArray, m + 1, r, screen)
+            SortArray.merge(unsortedArray, l, m, r, screen)
+
+        
+    @staticmethod
+    def draw(screen: pygame.Surface, unsortedArray: typing.List[VisualizeArray]):
+        isRunning: bool = True
+                
+        screen.fill(BLACK)
+        xPos = [i * (WIDTH // NUMBER_OF_ELEMENTS) for i in range(NUMBER_OF_ELEMENTS)]
+    
+        for i, element in enumerate(unsortedArray):
+            element.show(screen, xPos[i])
+            
+            for events in pygame.event.get():
+                if (events.type == pygame.QUIT):
+                    isRunning = False
+                    
+                    pygame.quit()
+                    sys.exit()
+                    
+    @staticmethod    
+    def insertionSort(unsortedArray: typing.List[VisualizeArray], screen: pygame.Surface) -> None:
+        for i in range(1, len(unsortedArray)):
+            key = unsortedArray[i]
+            j = i - 1
+            while j >= 0 and key.height < unsortedArray[j].height:
+                unsortedArray[j + 1] = unsortedArray[j]
+                j -= 1
+
+                SortArray.draw(screen, unsortedArray)
+                pygame.display.flip()
+        
+            unsortedArray[j + 1] = key
+            SortArray.draw(screen, unsortedArray)
+            pygame.display.flip()
+    
+    @staticmethod
+    def selectionSort(unsortedArray: typing.List[VisualizeArray], screen: pygame.Surface):
+        for ind in range(len(unsortedArray)):
+            minIndex = ind
+            
+            for j in range(ind + 1, len(unsortedArray)):
+                if (unsortedArray[j].height < unsortedArray[minIndex].height):
+                    minIndex = j
+            
+            (unsortedArray[ind], unsortedArray[minIndex]) = (unsortedArray[minIndex], unsortedArray[ind])
+            SortArray.draw(screen, unsortedArray)
+            pygame.display.flip()
+
+def setup():
+    pygame.init()
+    screen: pygame.Surface = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Sorting Visualized")
+    
+    clock = pygame.time.Clock()
+    unsortedArray: typing.List[VisualizeArray] = [VisualizeArray(random.randint(10, HEIGHT)) for _ in range(NUMBER_OF_ELEMENTS)]
+    
+    return screen, clock, unsortedArray
+
+def draw(screen: pygame.Surface, clock, unsortedArray: typing.List[VisualizeArray]):
+    isRunning: bool = True
+
+    while isRunning:
+        for events in pygame.event.get():
+            if (events.type == pygame.QUIT):
+                isRunning = False
+            else:
+                SortArray.bubbleSort(unsortedArray.copy(), screen)
+                SortArray.quickSort(unsortedArray.copy(), 0, len(unsortedArray) - 1, screen)
+                SortArray.insertionSort(unsortedArray.copy(), screen)
+                SortArray.mergeSort(unsortedArray.copy(), 0, len(unsortedArray.copy()) - 1, screen)
+                SortArray.selectionSort(unsortedArray.copy(), screen)
+                unsortedArray = [VisualizeArray(random.randint(10, HEIGHT)) for _ in range(NUMBER_OF_ELEMENTS)]
+        
+        clock.tick(60)
+
+    pygame.quit()
+    sys.exit()
+
+def main():
+    screen, clock, unsortedArray = setup()
+    draw(screen, clock, unsortedArray)
+
+if __name__ == "__main__":
+    main()
